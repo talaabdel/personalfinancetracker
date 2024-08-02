@@ -10,12 +10,21 @@ export default function Home() {
   const [inventory, setInventory] = useState([]);
   const [open, setOpen] = useState(false);
   const [itemName, setItemName] = useState('');
+  const [category, setCategory] = useState('');
+  const [price, setPrice] = useState('');
+  const [supplier, setSupplier] = useState('');
+  const [editItem, setEditItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
 
 
   const updateInventory = async () => {
-    const snapshot = query(collection(firestore, 'inventory'));
-    const docs = await getDocs(snapshot);
+    // const snapshot = await getDocs(collection(firestore, 'inventory'));
+    const inventoryCollection = collection(firestore, 'inventory');
+
+    // console.log("snapshot",snapshot)
+    const docs = await getDocs(inventoryCollection);
+    //console.log("docs",docs)
+
     const inventoryList = [];
     docs.forEach((doc) => {
       inventoryList.push({
@@ -30,13 +39,12 @@ export default function Home() {
   const addItem = async (item) => {
     const docRef = doc(collection(firestore, 'inventory'), item);
     const docSnap = await getDoc(docRef);
-
-
+    //console.log('eeeeeeee', docSnap, 'eeeeeeeeee', docRef)
     if (docSnap.exists()) {
       const { quantity } = docSnap.data();
-      await setDoc(docRef, { quantity: quantity + 1 });
+      await setDoc(docRef, { quantity: (quantity || 0) + 1, category, price, supplier }, { merge: true });
     } else {
-      await setDoc(docRef, { quantity: 1 });
+      await setDoc(docRef, { quantity: 1, category, price, supplier });
     }
     await updateInventory();
   };
@@ -52,9 +60,37 @@ export default function Home() {
       if (quantity === 1) {
         await deleteDoc(docRef);
       } else {
-        await setDoc(docRef, { quantity: quantity - 1 });
+        await setDoc(docRef, { quantity: quantity - 1 }, { merge: true });
       }
     }
+    await updateInventory();
+  };
+
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => {
+    setOpen(false);
+    setEditItem(null);
+  };
+
+
+  const handleEdit = (itemName) => {
+    const item = inventory.find((i) => i.name === itemName);
+    if (item) {
+      setEditItem(itemName);
+      setCategory(item.category || '');
+      setPrice(item.price || '');
+      setSupplier(item.supplier || '');
+      handleOpen();
+    }
+  };
+
+
+  const handleSaveEdit = async () => {
+    const docRef = doc(collection(firestore, 'inventory'), editItem);
+    await setDoc(docRef, { category, price, supplier }, { merge: true });
+    setEditItem(null);
+    handleClose();
     await updateInventory();
   };
 
@@ -62,10 +98,6 @@ export default function Home() {
   useEffect(() => {
     updateInventory();
   }, []);
-
-
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
 
 
   const filteredInventory = inventory.filter(item =>
@@ -101,25 +133,55 @@ export default function Home() {
             transform: 'translate(-50%, -50%)',
           }}
         >
-          <Typography variant="h6">Add Item</Typography>
+          <Typography variant="h6">{editItem ? "Edit Item" : "Add Item"}</Typography>
+          <TextField
+            variant='outlined'
+            fullWidth
+            label="Item Name"
+            value={itemName}
+            onChange={(e) => setItemName(e.target.value)}
+            disabled={!!editItem} // Disable input if editing
+          />
+          <TextField
+            variant='outlined'
+            fullWidth
+            label="Category"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          />
+          <TextField
+            variant='outlined'
+            fullWidth
+            label="Price"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+          />
+          <TextField
+            variant='outlined'
+            fullWidth
+            label="Supplier"
+            value={supplier}
+            onChange={(e) => setSupplier(e.target.value)}
+          />
           <Stack width="100%" direction="row" spacing={2}>
-            <TextField
-              variant='outlined'
-              fullWidth
-              value={itemName}
-              onChange={(e) => {
-                setItemName(e.target.value);
-              }}
-            />
             <Button
-              variant='outlined'
+              variant='contained'
               onClick={() => {
-                addItem(itemName);
-                setItemName('');
+                if (editItem) {
+                  handleSaveEdit();
+                } else {
+                  addItem(itemName);
+                }
                 handleClose();
               }}
             >
-              Add
+              {editItem ? "Save" : "Add"}
+            </Button>
+            <Button
+              variant='outlined'
+              onClick={handleClose}
+            >
+              Cancel
             </Button>
           </Stack>
         </Box>
@@ -127,6 +189,10 @@ export default function Home() {
       <Button
         variant='contained'
         onClick={() => {
+          setItemName('');
+          setCategory('');
+          setPrice('');
+          setSupplier('');
           handleOpen();
         }}
         sx={{ backgroundColor: '#fc3794', '&:hover': { backgroundColor: '#022a46' } }}
@@ -147,14 +213,15 @@ export default function Home() {
           bgcolor="#77ec6e"
           display="flex"
           alignItems="center"
-          justifyContent={'center'}>
+          justifyContent={'center'}
+        >
           <Typography variant='h2' color='#033958'>
             Inventory Items!
           </Typography>
         </Box>
         <Stack width="800px" height="300px" spacing={2} overflow="auto">
           {
-            filteredInventory.map(({ name, quantity }) => (
+            filteredInventory.map(({ name, quantity, category, price, supplier }) => (
               <Box
                 key={name}
                 width="100%"
@@ -165,13 +232,24 @@ export default function Home() {
                 bgColor="#f0f0f0"
                 padding={5}
               >
-                <Typography variant="h3" color='#fc3794' textAlign={'center'}>
-                  {name.charAt(0).toUpperCase() + name.slice(1)}
-                </Typography>
-                <Typography variant="h3" color='#fc3794' textAlign={'center'}>
-                  {quantity}
-                </Typography>
+                <Box>
+                  <Typography variant="h3" color='#fc3794' textAlign={'center'}>
+                    {name.charAt(0).toUpperCase() + name.slice(1)}
+                  </Typography>
+                  <Typography variant="body1" color='#fc3794'>
+                    Category: {category}
+                  </Typography>
+                  <Typography variant="body1" color='#fc3794'>
+                    Price: ${price ? Number(price).toFixed(2) : 'N/A'}
+                  </Typography>
+                  <Typography variant="body1" color='#fc3794'>
+                    Supplier: {supplier}
+                  </Typography>
+                </Box>
                 <Stack direction="row" spacing={2}>
+                  <Typography variant="h4" color='#fc3794' textAlign={'center'}>
+                    {quantity}
+                  </Typography>
                   <Button
                     variant="contained"
                     onClick={() => {
@@ -189,6 +267,15 @@ export default function Home() {
                     sx={{ backgroundColor: '#fc3794', '&:hover': { backgroundColor: '#e0297b' } }}
                   >
                     Remove
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      handleEdit(name);
+                    }}
+                    sx={{ backgroundColor: '#fc3794', '&:hover': { backgroundColor: '#e0297b' } }}
+                  >
+                    Edit
                   </Button>
                 </Stack>
               </Box>
