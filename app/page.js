@@ -18,13 +18,8 @@ export default function Home() {
 
 
   const updateInventory = async () => {
-    // const snapshot = await getDocs(collection(firestore, 'inventory'));
     const inventoryCollection = collection(firestore, 'inventory');
-
-    // console.log("snapshot",snapshot)
     const docs = await getDocs(inventoryCollection);
-    //console.log("docs",docs)
-
     const inventoryList = [];
     docs.forEach((doc) => {
       inventoryList.push({
@@ -39,7 +34,6 @@ export default function Home() {
   const addItem = async (item) => {
     const docRef = doc(collection(firestore, 'inventory'), item);
     const docSnap = await getDoc(docRef);
-    //console.log('eeeeeeee', docSnap, 'eeeeeeeeee', docRef)
     if (docSnap.exists()) {
       const { quantity } = docSnap.data();
       await setDoc(docRef, { quantity: (quantity || 0) + 1, category, price, supplier }, { merge: true });
@@ -53,8 +47,6 @@ export default function Home() {
   const removeItem = async (item) => {
     const docRef = doc(collection(firestore, 'inventory'), item);
     const docSnap = await getDoc(docRef);
-
-
     if (docSnap.exists()) {
       const { quantity } = docSnap.data();
       if (quantity === 1) {
@@ -104,6 +96,7 @@ export default function Home() {
     item.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+///////////////////////////////////////////////////////////////////////////
 
   return (
     <Box
@@ -116,12 +109,23 @@ export default function Home() {
       gap={1}
       sx={{ backgroundColor: "black" }}
     >
+     
+      <Typography variant='h3' color='#77ec6e' >
+        WELCOME TO INVENTORY TRACKER 3000
+      </Typography>
+      <Typography variant="body1" color="white" sx={{ marginBottom: 3, textAlign: 'center'  }}>
+      Our intuitive pantry tracker app revolutionizes inventory management with its user-friendly interface. <br/> Effortlessly add, edit, remove, categorize, and monitor your pantry items. Stay organized with a sleek, responsive design <br/>that streamlines the tracking and management of your pantry essentials, ensuring efficiency and simplicity at your fingertips.
+      </Typography>
+
+      
+
+      //////////////////////////////////////////////////////
       <Modal open={open} onClose={handleClose}>
         <Box
           position="absolute"
           top="50%"
           left="50%"
-          width={400}
+          width={300}
           bgcolor="white"
           border="10px solid #033958"
           boxShadow={24}
@@ -199,41 +203,46 @@ export default function Home() {
       >
         Add New Item
       </Button>
+      <Box
+      border = '5px solid #033958'
+      sx={{ width: '800px', marginBottom: '10px', backgroundColor: 'white' }}
+      >
       <TextField
         variant='outlined'
         placeholder="Search items"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        sx={{ width: '800px', marginBottom: '20px', backgroundColor: 'white' }}
+        fullWidth
       />
+      </Box>
       <Box border='5px solid #033958' sx={{ backgroundColor: 'white' }}>
         <Box
           width="800px"
-          height="100px"
+          height="70px"
           bgcolor="#77ec6e"
           display="flex"
           alignItems="center"
           justifyContent={'center'}
         >
-          <Typography variant='h2' color='#033958'>
-            Inventory Items!
+          <Typography variant='h4' color='#033958'>
+          Inventory Items
           </Typography>
         </Box>
-        <Stack width="800px" height="300px" spacing={2} overflow="auto">
+        <Stack width="800px" height="300px" spacing={1} overflow="auto">
           {
             filteredInventory.map(({ name, quantity, category, price, supplier }) => (
               <Box
                 key={name}
                 width="100%"
-                minHeight="150px"
+                minHeight="125px"
                 display="flex"
                 alignItems="center"
                 justifyContent="space-between"
                 bgColor="#f0f0f0"
-                padding={5}
+                padding={4}
               >
                 <Box>
-                  <Typography variant="h3" color='#fc3794' textAlign={'center'}>
+                  <Typography variant="h4" color='#fc3794' textAlign={'center'}>
                     {name.charAt(0).toUpperCase() + name.slice(1)}
                   </Typography>
                   <Typography variant="body1" color='#fc3794'>
@@ -247,8 +256,8 @@ export default function Home() {
                   </Typography>
                 </Box>
                 <Stack direction="row" spacing={2}>
-                  <Typography variant="h4" color='#fc3794' textAlign={'center'}>
-                    {quantity}
+                  <Typography variant="h5" color='#fc3794' textAlign={'center'}>
+                    Quantity: {quantity}
                   </Typography>
                   <Button
                     variant="contained"
