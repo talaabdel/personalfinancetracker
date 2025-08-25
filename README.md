@@ -1,6 +1,6 @@
 # 💰 Personal Finance Tracker
 
-A web application designed to help users **track and manage their personal finances** easily. Monitor income, expenses, and savings in one place to make informed financial decisions.  
+This web application is designed to help users **track and manage their personal finances** easily. You can easily monitor your expenses in one place to make better and more informed financial decisions.  
 
 ---
 
@@ -17,15 +17,6 @@ A web application designed to help users **track and manage their personal finan
 - **Frontend:** React.js, HTML, CSS, Tailwind
 - **Backend:** Node.js 
 - **Hosting:** Vercel
----
-
-## 📂 Project Structure  
-/src
-├── components → Reusable UI components
-├── pages → Main pages / routes
-├── utils → Helper functions
-├── assets → Images or icons
-README.md → Project documentation
 
 ---
 
